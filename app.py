@@ -35,23 +35,19 @@ def tap_masuk():
     req = request.get_json()
     uid = req.get('uid')
     waktu_masuk = datetime.now().strftime('%H:%M:%S')
-
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT * FROM akses WHERE uid=? AND status='Di Dalam'", (uid,))
     existing = c.fetchone()
-
     if existing:
         conn.close()
         return jsonify({"status": "gagal", "pesan": "Sudah di dalam!"})
-
     c.execute(
         "INSERT INTO akses (uid, waktu_masuk, status) VALUES (?, ?, ?)",
         (uid, waktu_masuk, 'Di Dalam')
     )
     conn.commit()
     conn.close()
-
     print(f"\nTAP MASUK\nID          : {uid}\nWAKTU MASUK : {waktu_masuk}")
     return jsonify({"status": "sukses", "waktu_masuk": waktu_masuk})
 
@@ -60,16 +56,13 @@ def tap_keluar():
     req = request.get_json()
     uid = req.get('uid')
     waktu_keluar = datetime.now().strftime('%H:%M:%S')
-
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT * FROM akses WHERE uid=? AND status='Di Dalam'", (uid,))
     row = c.fetchone()
-
     if not row:
         conn.close()
         return jsonify({"status": "gagal", "pesan": "UID tidak ditemukan / belum masuk!"})
-
     fmt = '%H:%M:%S'
     t_masuk  = datetime.strptime(row[2], fmt)
     t_keluar = datetime.strptime(waktu_keluar, fmt)
@@ -78,14 +71,12 @@ def tap_keluar():
     mnt  = total_dtk // 60
     dtk  = total_dtk % 60
     durasi = f"{mnt} menit {dtk} detik" if mnt > 0 else f"{total_dtk} detik"
-
     c.execute(
         "UPDATE akses SET waktu_keluar=?, durasi=?, status=? WHERE id=?",
         (waktu_keluar, durasi, 'Sudah Keluar', row[0])
     )
     conn.commit()
     conn.close()
-
     print(f"\nTAP KELUAR\nID           : {uid}\nWAKTU KELUAR : {waktu_keluar}\nDURASI       : {durasi}")
     return jsonify({"status": "sukses", "waktu_keluar": waktu_keluar, "durasi": durasi})
 
@@ -96,7 +87,6 @@ def get_data():
     c.execute('SELECT * FROM akses ORDER BY id DESC')
     rows = c.fetchall()
     conn.close()
-
     result = []
     for r in rows:
         result.append({
@@ -110,8 +100,6 @@ def get_data():
     return jsonify(result)
 
 init_db()
-
-app = Flask(__name__)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
