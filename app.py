@@ -1,10 +1,10 @@
+import os
 from flask import Flask, jsonify, request, render_template
 from datetime import datetime
 import sqlite3
 
 app = Flask(__name__)
 
-# ===== DATABASE SETUP =====
 def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
@@ -21,7 +21,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# ===== ROUTE: Halaman Utama =====
 @app.route('/')
 def index():
     conn = sqlite3.connect('database.db')
@@ -31,7 +30,6 @@ def index():
     conn.close()
     return render_template('index.html', data=data)
 
-# ===== ROUTE: Tap Masuk dari ESP32 =====
 @app.route('/tap-masuk', methods=['POST'])
 def tap_masuk():
     req = request.get_json()
@@ -40,8 +38,6 @@ def tap_masuk():
 
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-
-    # Cek apakah UID ini sudah masuk tapi belum keluar
     c.execute("SELECT * FROM akses WHERE uid=? AND status='Di Dalam'", (uid,))
     existing = c.fetchone()
 
@@ -59,7 +55,6 @@ def tap_masuk():
     print(f"\nTAP MASUK\nID          : {uid}\nWAKTU MASUK : {waktu_masuk}")
     return jsonify({"status": "sukses", "waktu_masuk": waktu_masuk})
 
-# ===== ROUTE: Tap Keluar dari ESP32 =====
 @app.route('/tap-keluar', methods=['POST'])
 def tap_keluar():
     req = request.get_json()
@@ -68,7 +63,6 @@ def tap_keluar():
 
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-
     c.execute("SELECT * FROM akses WHERE uid=? AND status='Di Dalam'", (uid,))
     row = c.fetchone()
 
@@ -76,7 +70,6 @@ def tap_keluar():
         conn.close()
         return jsonify({"status": "gagal", "pesan": "UID tidak ditemukan / belum masuk!"})
 
-    # Hitung durasi
     fmt = '%H:%M:%S'
     t_masuk  = datetime.strptime(row[2], fmt)
     t_keluar = datetime.strptime(waktu_keluar, fmt)
@@ -96,7 +89,6 @@ def tap_keluar():
     print(f"\nTAP KELUAR\nID           : {uid}\nWAKTU KELUAR : {waktu_keluar}\nDURASI       : {durasi}")
     return jsonify({"status": "sukses", "waktu_keluar": waktu_keluar, "durasi": durasi})
 
-# ===== ROUTE: Get Data untuk Auto-Refresh =====
 @app.route('/get-data', methods=['GET'])
 def get_data():
     conn = sqlite3.connect('database.db')
@@ -117,6 +109,9 @@ def get_data():
         })
     return jsonify(result)
 
+init_db()
+
+app = Flask(__name__)
+
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
