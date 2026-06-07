@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Lock Monitoring</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; background: #f0f0f0; }
+    h1 { color: #1a237e; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th { background: #1a237e; color: white; padding: 10px; }
+    td { padding: 10px; border-bottom: 1px solid #ddd; text-align: center; }
+    tr:hover { background: #e3f2fd; }
+    .di-dalam { color: orange; font-weight: bold; }
+    .sudah-keluar { color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🔒 Smart Lock Door Access Monitoring</h1>
+  <h3>Dept. Electrical Engineering — Universitas Padjadjaran</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>UID Kartu</th>
+        <th>Waktu Masuk</th>
+        <th>Waktu Keluar</th>
+        <th>Durasi</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabel-data">
+      <!-- diisi otomatis -->
+    </tbody>
+  </table>
+
+  <script>
+    function refreshData() {
+      $.get('/get-data', function(data) {
+        var html = '';
+        for (var i = 0; i < data.length; i++) {
+          var d = data[i];
+          var statusClass = d.status === 'Di Dalam' ? 'di-dalam' : 'sudah-keluar';
+          html += '<tr>';
+          html += '<td>' + d.id + '</td>';
+          html += '<td>' + d.uid + '</td>';
+          html += '<td>' + d.waktu_masuk + '</td>';
+          html += '<td>' + d.waktu_keluar + '</td>';
+          html += '<td>' + d.durasi + '</td>';
+          html += '<td class="' + statusClass + '">' + d.status + '</td>';
+          html += '</tr>';
+        }
+        $('#tabel-data').html(html);
+      });
+    }
+
+    // Auto refresh tiap 2 detik
+    setInterval(refreshData, 2000);
+    refreshData();
+  </script>
+</body>
+</html>
