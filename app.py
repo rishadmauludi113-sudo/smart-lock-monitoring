@@ -94,4 +94,11 @@ def get_data():
             "uid": r[1],
             "waktu_masuk": r[2],
             "waktu_keluar": r[3] if r[3] else "-",
-            "dur
+            "durasi": r[4] if r[4] else "-",
+            "status": r[5]
+        })
+    return jsonify(result)
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)
